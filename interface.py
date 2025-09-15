@@ -156,56 +156,134 @@ class TopBarApp(CTkFrame):
             self.zoom_out_button.grid(row=0, column=0)
             self.zoom_in_button.grid(row=0, column=1)
 
-class PhotoFrame(CTkLabel):
-    ''' Frame to display video content. '''
+class PhotoFrame(CTkFrame):
+    ''' Frame to display video content with scrollbars and mouse navigation. '''
     def __init__(self, master):
         super().__init__(master)
-
-        self.configure(text="")
-        self.pack(fill=BOTH, pady=5, padx=5)
-
+        self.pack(fill=BOTH, expand=True, pady=5, padx=5)
+        
         self.zoom = 0.5
-        # self.image = Image.new(mode="RGB", size=(400, 400), color="white")
-        # self.set(image=self.image)
+        self.image_pil = None
+        self.image_ctk = None
+        self.asset_path = None
+
+        self.yscroll_bar = CTkScrollbar(self, orientation=VERTICAL)
+        self.yscroll_bar.pack(fill=Y, side=RIGHT, expand=False)
+        self.xscroll_bar = CTkScrollbar(self, orientation=HORIZONTAL)
+        self.xscroll_bar.pack(fill=X, side=BOTTOM, expand=False)
+        
+        self.canvas = CTkCanvas(self, 
+                                yscrollcommand=self.yscroll_bar.set, 
+                                xscrollcommand=self.xscroll_bar.set,
+                                bg=ThemeManager.theme["CTkFrame"]["fg_color"][1]
+                                )
+        self.canvas.pack(fill=BOTH, expand=True)
+
+        self.yscroll_bar.configure(command=self.canvas.yview)
+        self.xscroll_bar.configure(command=self.canvas.xview)
+
+        self.image_label = CTkLabel(self.canvas, text="Aucune image chargée")
+        self.canvas_window = self.canvas.create_window(0, 0, anchor=NW, window=self.image_label)
+
+        self._keybinds()
     
+    def mouse_wheel(self, event):
+        """Gère le défilement vertical avec la molette"""
+        if self._is_scrollbar_active('y'):
+            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def alt_mouse_wheel(self, event):
+        """Gère le défilement horizontal avec la molette"""
+        if self._is_scrollbar_active('x'):
+            self.canvas.xview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def ctrl_mouse_wheel(self, event):
+        """Gère la molette de souris pour le zoom (optionnel)"""
+        if event.delta > 0:
+            self.increment_zoom(0.1)
+        else:
+            self.increment_zoom(-0.1)
+
     def set(self, asset_path=None):
-        ''' Set the video to display. '''
-
+        ''' Set the image to display. '''
         self.asset_path = asset_path or filedialog.askopenfilename()
-
-        image = Image.open(self.asset_path)
-
-        width = image.width * self.zoom
-        height = image.height * self.zoom
-
-        imageTk = CTkImage(image, size=(width, height))
-
-        self.configure(image=imageTk)
-        self.image = imageTk
-
-    def get_image(self):
-        return self.image._light_image or self.image._dark_image
+        
+        if not self.asset_path:
+            return
+            
+        try:
+            self.image_pil = Image.open(self.asset_path)
+            self.update_display()
+            
+        except Exception as e:
+            print(f"Erreur lors du chargement de l'image: {e}")
+            self.image_label.configure(text=f"Erreur: {str(e)}")
     
-    def update_zoom(self, image: Image.Image):
-
-        width = image.width * self.zoom
-        height = image.height * self.zoom
-
-        imageTk = CTkImage(image, size=(width, height))
-
-        self.configure(image=imageTk)
-        self.image = imageTk
-
+    def update_display(self):
+        """Met à jour l'affichage de l'image avec le zoom actuel"""
+        if self.image_pil is None:
+            return
+        
+        width = int(self.image_pil.width * self.zoom)
+        height = int(self.image_pil.height * self.zoom)
+        
+        max_size = 5000
+        if width > max_size or height > max_size:
+            ratio = min(max_size / width, max_size / height)
+            width = int(width * ratio)
+            height = int(height * ratio)
+        
+        try:
+            self.image_ctk = CTkImage(self.image_pil, size=(width, height))
+            self.image_label.configure(image=self.image_ctk, text="", width=width, height=height)
+            self.canvas.update_idletasks()
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+            
+        except Exception as e:
+            print(f"Erreur lors de la mise à jour de l'affichage: {e}")
+    
+    def get_image(self):
+        """Retourne l'image PIL actuelle"""
+        return self.image_pil
+    
     def change_zoom(self, zoom: float):
-        if zoom > 0:
+        """Change le zoom à une valeur spécifique"""
+        if zoom > 0 and zoom <= 10:
             self.zoom = zoom
-            self.update_zoom(self.get_image())
+            self.update_display()
+            self.after(10, self.center_image)
+    
+    def increment_zoom(self, zoom_delta: float):
+        """Incrémente le zoom de la valeur spécifiée"""
+        new_zoom = self.zoom + zoom_delta
+        if 0.1 <= new_zoom <= 10:
+            self.zoom = new_zoom
+            self.update_display()
+    
+    def _keybinds(self):
 
-    def increment_zoom(self, zoom: float):
-        if self.zoom + zoom > 0:
-            self.zoom += zoom
-            self.update_zoom(self.get_image())
+        self.image_label.bind("<Control-MouseWheel>", self.ctrl_mouse_wheel)
+        self.image_label.bind("<Alt-MouseWheel>", self.alt_mouse_wheel)
+        self.image_label.bind("<MouseWheel>", self.mouse_wheel)
 
+    def _is_scrollbar_active(self, axe: str ="x") -> bool:
+        """Vérifie si les scrollbars sont nécessaires (l'image dépasse la taille du canvas)"""
+        self.canvas.update_idletasks()
+        
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+        
+        scroll_region = self.canvas.cget("scrollregion")
+        if scroll_region:
+            coords = scroll_region.split()
+            if len(coords) == 4:
+                content_width = float(coords[2]) - float(coords[0])
+                content_height = float(coords[3]) - float(coords[1])
+                
+                if axe == 'y': return content_height > canvas_height 
+                if axe == 'x': return content_width > canvas_width 
+        
+        return False
     
 class MenuFrame(CTkFrame):
     ''' Frame for the app menu options. '''
