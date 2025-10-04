@@ -330,7 +330,7 @@ class App(CTk):
     ''' Main Application Class. '''
     def __init__(self):
         super().__init__()
-        self.title("Videhome")
+        self.title("Photo Editor")
         self.geometry("800x600")
 
         set_appearance_mode(settings["appearance"])
