@@ -30,6 +30,9 @@ class TopBarApp(CTkFrame):
         self.menu = self.Zoom(self)
         self.menu.pack(side=LEFT, padx=5, pady=5)
 
+        self.edit = self.Edit(self)
+        self.edit.pack(side=LEFT, padx=5, pady=5)
+
         self.search_bar = self.SearchBar(self)
         self.search_bar.pack(padx=5, pady=5)
 
@@ -101,7 +104,7 @@ class TopBarApp(CTkFrame):
             self.menu_image = CTkImage(Image.open(os.path.join(os.path.dirname(__file__), "img_dark", "options.png")), Image.open(os.path.join(os.path.dirname(__file__), "img_light", "options.png")), (20, 20))
             self.menu_button = CTkButton(self, image=self.menu_image, text="", width=30, height=30, fg_color="transparent", command=self.menu_frame.open_menu)
             self.menu_button.pack()
-            
+
     class ActionsHandler(CTkFrame):
         ''' Functions to redo. '''
         def __init__(self, master):
@@ -136,7 +139,7 @@ class TopBarApp(CTkFrame):
             self.save_as_image = CTkImage(Image.open(os.path.join(os.path.dirname(__file__), "img_dark", "save.png")), Image.open(os.path.join(os.path.dirname(__file__), "img_light", "save.png")), (20, 20))
 
             self.import_button = CTkButton(self, image=self.import_image, text="", width=30, height=30, fg_color="transparent", command=lambda: master.master.photo_frame.set())
-            self.save_as_button = CTkButton(self, image=self.save_as_image, text="", width=30, height=30, fg_color="transparent", command=lambda: ImageModules.saveas(master.master.photo_frame.get_image()))
+            self.save_as_button = CTkButton(self, image=self.save_as_image, text="", width=30, height=30, fg_color="transparent", command=lambda: ImageModules.File.saveas(master.master.photo_frame.get_image()))
             
             self.import_button.grid(row=0, column=0)
             self.save_as_button.grid(row=0, column=1)
@@ -155,6 +158,20 @@ class TopBarApp(CTkFrame):
             
             self.zoom_out_button.grid(row=0, column=0)
             self.zoom_in_button.grid(row=0, column=1)
+    
+    class Edit(CTkFrame):
+        def __init__(self, master):
+            super().__init__(master)
+
+            self.configure(height=40, fg_color="transparent")
+            self.edit_image = CTkImage(Image.open(os.path.join(os.path.dirname(__file__), "img_dark", "edit.png")), Image.open(os.path.join(os.path.dirname(__file__), "img_light", "edit.png")), (20, 20))
+            self.edit_button = CTkButton(self, image=self.edit_image, text="", width=30, height=30, fg_color="transparent", command=self.open_edit_popup)
+            self.edit_button.pack()
+
+        def open_edit_popup(self):
+            ''' Open the edit popup window. '''
+            from popups import EditPopup
+            EditPopup(self.master.master, self.master.master.photo_frame.get_image())
 
 class PhotoFrame(CTkFrame):
     ''' Frame to display video content with scrollbars and mouse navigation. '''
@@ -219,10 +236,15 @@ class PhotoFrame(CTkFrame):
             print(f"Erreur lors du chargement de l'image: {e}")
             self.image_label.configure(text=f"Erreur: {str(e)}")
     
-    def update_display(self):
+    def update_display(self, image=None):
         """Met à jour l'affichage de l'image avec le zoom actuel"""
         if self.image_pil is None:
             return
+        
+        if image:
+            self.image_pil = image
+        else:
+            self.image_pil = self.image_pil
         
         width = int(self.image_pil.width * self.zoom)
         height = int(self.image_pil.height * self.zoom)
@@ -302,7 +324,7 @@ class MenuFrame(CTkFrame):
                 relheight=1.0,
                 anchor=NW
             )
-            
+
             self.lift()
 
 class App(CTk):
