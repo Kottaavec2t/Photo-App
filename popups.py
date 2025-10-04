@@ -12,7 +12,6 @@ class EditPopup(ctk.CTkToplevel):
         self.transient(master)  # Keep the popup on top of the master window
         self.grab_set()  # Make the popup modal
 
-        image.save("temp.png")
         self.image = image
 
         self.buttons_frame = ctk.CTkFrame(self)
@@ -63,22 +62,18 @@ class EditPopup(ctk.CTkToplevel):
 
     def BlackandWhite_image(self):
         self.image = Modify.BlackandWhiteImage(self.image)
-        print("black and white")
         self.photo_frame.update_display()
 
     def Resize_image(self):
         self.image = Modify.ReSizeImage(self.image, (int(self.resize_x_input.get()), int(self.resize_y_input.get())))
-        print("resized")
         self.photo_frame.update_display()
 
     def Brightness_image(self):
         self.image = Modify.BrightnessImage(self.image, float(self.brightness_input.get()))
-        print("brightness changed")
         self.photo_frame.update_display()
     
     def Rotate_image(self):
         self.image = Modify.RotateImage(self.image, float(self.rotation_input.get()))
-        print("rotated")
         self.photo_frame.update_display()
 
     def get_image(self):

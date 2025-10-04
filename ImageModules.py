@@ -1,7 +1,4 @@
-""""Imports"""
-
 from customtkinter import filedialog
-
 from PIL import ImageEnhance, Image
 
 class Modify():

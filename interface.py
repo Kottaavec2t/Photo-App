@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 import time
 import sys
 import ImageModules
+from popups import EditPopup
 
 with open(os.path.join(os.path.dirname(__file__), "settings.json"), "r") as f:
     read = f.read()
@@ -170,7 +171,6 @@ class TopBarApp(CTkFrame):
 
         def open_edit_popup(self):
             ''' Open the edit popup window. '''
-            from popups import EditPopup
             EditPopup(self.master.master, self.master.master.photo_frame.get_image())
 
 class PhotoFrame(CTkFrame):
@@ -233,7 +233,6 @@ class PhotoFrame(CTkFrame):
             self.update_display()
             
         except Exception as e:
-            print(f"Erreur lors du chargement de l'image: {e}")
             self.image_label.configure(text=f"Erreur: {str(e)}")
     
     def update_display(self, image=None):
