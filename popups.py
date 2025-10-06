@@ -50,7 +50,7 @@ class EditPopup(ctk.CTkToplevel):
         self.resize_button = ctk.CTkButton(self.rotation_frame, text="Rotate", command=self.Rotate_image)
         self.resize_button.pack(pady=5, padx=10)
 
-        self.photo_frame = PhotoFrame(self)
+        self.photo_frame = self.PhotoFrame(self)
         self.photo_frame.pack(side=RIGHT, pady=5, padx=5)
 
         self.apply_button = ctk.CTkButton(self, text="Apply Changes", command=self.apply)
@@ -79,33 +79,33 @@ class EditPopup(ctk.CTkToplevel):
     def get_image(self):
         return self.image
 
-class PhotoFrame(CTkFrame):
-    def __init__(self, master):
-        super().__init__(master)
-        self.image_pil: Image.Image = None
-        self.image_ctk = None
-        self.asset_path = None
+    class PhotoFrame(CTkFrame):
+        def __init__(self, master):
+            super().__init__(master)
+            self.image_pil: Image.Image = None
+            self.image_ctk = None
+            self.asset_path = None
 
-        self.image_label = CTkLabel(self, text="Aucune image chargée")
-        self.image_label.pack(fill=BOTH)
+            self.image_label = CTkLabel(self, text="Aucune image chargée")
+            self.image_label.pack(fill=BOTH)
 
-        self.update_display()
-    
-    def update_display(self):
-
-        self.image_pil = self.master.get_image()
-
-        if self.image_pil is None:
-            self.image_label.configure(text="Aucune image chargée", image=None)
-            return
+            self.update_display()
         
-        width = 300
-        height = 300
+        def update_display(self):
 
-        try:
-            temp_image = self.image_pil.copy()
-            self.image_ctk = CTkImage(temp_image, size=(width, height))
-            self.image_label.configure(image=self.image_ctk, text="")
+            self.image_pil = self.master.get_image()
 
-        except Exception as e:
-            print(f"Erreur lors de la mise à jour de l'affichage: {e}")
+            if self.image_pil is None:
+                self.image_label.configure(text="Aucune image chargée", image=None)
+                return
+            
+            width = 300
+            height = 300
+
+            try:
+                temp_image = self.image_pil.copy()
+                self.image_ctk = CTkImage(temp_image, size=(width, height))
+                self.image_label.configure(image=self.image_ctk, text="")
+
+            except Exception as e:
+                print(f"Erreur lors de la mise à jour de l'affichage: {e}")
