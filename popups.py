@@ -13,6 +13,7 @@ class EditPopup(ctk.CTkToplevel):
         self.grab_set()  # Make the popup modal
 
         self.image = image
+        self.rotate_image = image.copy()
 
         self.buttons_frame = ctk.CTkFrame(self)
         self.buttons_frame.configure(fg_color="transparent")
@@ -61,19 +62,28 @@ class EditPopup(ctk.CTkToplevel):
         self.destroy()
 
     def BlackandWhite_image(self):
+        self.rotate_image = Modify.BlackandWhiteImage(self.image)
         self.image = Modify.BlackandWhiteImage(self.image)
         self.photo_frame.update_display()
 
     def Resize_image(self):
+        if self.resize_x_input.get() == "" or self.resize_y_input.get() == "":
+            return
+        self.rotate_image = Modify.ReSizeImage(self.image, (int(self.resize_x_input.get()), int(self.resize_y_input.get())))
         self.image = Modify.ReSizeImage(self.image, (int(self.resize_x_input.get()), int(self.resize_y_input.get())))
         self.photo_frame.update_display()
 
     def Brightness_image(self):
+        if self.brightness_input.get() == "":
+            return
+        self.rotate_image = Modify.BrightnessImage(self.image, float(self.brightness_input.get()))
         self.image = Modify.BrightnessImage(self.image, float(self.brightness_input.get()))
         self.photo_frame.update_display()
     
     def Rotate_image(self):
-        self.image = Modify.RotateImage(self.image, float(self.rotation_input.get()))
+        if self.rotation_input.get() == "":
+            return
+        self.image = Modify.RotateImage(self.rotate_image, float(self.rotation_input.get()))
         self.photo_frame.update_display()
 
     def get_image(self):
