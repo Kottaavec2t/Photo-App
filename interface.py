@@ -6,7 +6,7 @@ from PIL import Image, ImageTk
 import time
 import sys
 import ImageModules
-from popups import EditPopup
+from popups import CropPopup, EditPopup
 
 with open(os.path.join(os.path.dirname(__file__), "settings.json"), "r") as f:
     read = f.read()
@@ -33,6 +33,9 @@ class TopBarApp(CTkFrame):
 
         self.edit = self.Edit(self)
         self.edit.pack(side=LEFT, padx=5, pady=5)
+
+        self.crop = self.Crop(self)
+        self.crop.pack(side=LEFT, padx=5, pady=5)
 
         self.search_bar = self.SearchBar(self)
         self.search_bar.pack(padx=5, pady=5)
@@ -172,6 +175,19 @@ class TopBarApp(CTkFrame):
         def open_edit_popup(self):
             ''' Open the edit popup window. '''
             EditPopup(self.master.master, self.master.master.photo_frame.get_image())
+
+    class Crop(CTkFrame):
+        def __init__(self, master):
+            super().__init__(master)
+
+            self.configure(height=40, fg_color="transparent")
+            self.crop_image = CTkImage(Image.open(os.path.join(os.path.dirname(__file__), "img_dark", "crop.png")), Image.open(os.path.join(os.path.dirname(__file__), "img_light", "crop.png")), (20, 20))
+            self.crop_button = CTkButton(self, image=self.crop_image, text="", width=30, height=30, fg_color="transparent", command=self.open_crop_popup)
+            self.crop_button.pack()
+
+        def open_crop_popup(self):
+            ''' Crop the current image. '''
+            CropPopup(self.master.master, self.master.master.photo_frame.get_image())
 
 class PhotoFrame(CTkFrame):
     ''' Frame to display video content with scrollbars and mouse navigation. '''
